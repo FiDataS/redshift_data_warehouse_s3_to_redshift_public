@@ -17,7 +17,7 @@ import time
 
 def read_redshift_config():
     '''
-
+    Reads the config from config_redshift.cfg file and returns all parameters
     '''
     config = configparser.ConfigParser()
     config.read_file(open('config_redshift.cfg'))
@@ -50,7 +50,7 @@ def read_redshift_config():
     
 def create_clients(KEY, SECRET):
     '''
-    
+    Creates clients for iam and redshift and returns them
     '''    
 
     iam = boto3.client('iam',aws_access_key_id=KEY,
@@ -71,7 +71,7 @@ def create_clients(KEY, SECRET):
 
 def delete_cluster_and_detach_role(DWH_CLUSTER_IDENTIFIER, redshift, iam, DWH_IAM_ROLE_NAME):
     '''
-    
+    Deletes the cluster and detaches the role
     '''
     print("Deleting cluster")
     redshift.delete_cluster( ClusterIdentifier=DWH_CLUSTER_IDENTIFIER,  SkipFinalClusterSnapshot=True)
@@ -89,7 +89,7 @@ def delete_cluster_and_detach_role(DWH_CLUSTER_IDENTIFIER, redshift, iam, DWH_IA
 
 def waitUntil(redshift, DWH_CLUSTER_IDENTIFIER):
     '''
-    
+    This function waits until the cluster is deleted in order to inform the user that it has been deleted successfully
     '''
     print("Checks if cluster is deleted otherwise waits until its deleted")
     while (1):
@@ -104,7 +104,7 @@ def waitUntil(redshift, DWH_CLUSTER_IDENTIFIER):
         
 def prettyRedshiftProps(props):
     '''
-    
+    Returns a dataframe with a summary of the cluster parameters that can be displayed
     '''
     pd.set_option('display.max_colwidth', -1)
     keysToShow = ["ClusterIdentifier", "NodeType", "ClusterStatus", "MasterUsername", "DBName", "Endpoint", "NumberOfNodes", 'VpcId']

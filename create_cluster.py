@@ -4,8 +4,6 @@ import json
 import configparser
 import time
 
-#pd und configparser notwendig?
-
 # Neccessary steps before executing:
 ## - Create a new IAM user in your AWS account
 ## - AWS user should get AdministratorAccess from the Attach existing policies directly tab
@@ -15,7 +13,7 @@ import time
 
 def read_redshift_config():
     '''
-
+    Reads the config from config_redshift.cfg file and returns all parameters
     '''
     config = configparser.ConfigParser()
     config.read_file(open('config_redshift.cfg'))
@@ -48,7 +46,7 @@ def read_redshift_config():
     
 def create_clients(KEY, SECRET):
     '''
-    
+    Created clients for ec2, s3, iam and redshift and returns the client objects
     '''
     ec2 = boto3.resource('ec2',
                            region_name="us-west-2",
@@ -83,7 +81,7 @@ def create_clients(KEY, SECRET):
     
 def create_IAM_role(DWH_IAM_ROLE_NAME, iam):
     '''
-    Creates IAM Role and attaches policy 
+    Creates IAM Role and attaches policy, returns the Role ARN
     '''
     try:
         print("Creating a new IAM Role")
@@ -118,7 +116,7 @@ def create_IAM_role(DWH_IAM_ROLE_NAME, iam):
     
 def create_redshift_cluster(roleArn, DWH_CLUSTER_TYPE, DWH_NODE_TYPE, DWH_NUM_NODES, DWH_DB, DWH_CLUSTER_IDENTIFIER, DWH_DB_USER, DWH_DB_PASSWORD, redshift):
     '''
-    
+    Creates the redshift cluster with the specified parameters
     '''
     print("Trying to create a cluster")
     try:
@@ -144,7 +142,7 @@ def create_redshift_cluster(roleArn, DWH_CLUSTER_TYPE, DWH_NODE_TYPE, DWH_NUM_NO
         
 def prettyRedshiftProps(props):
     '''
-    
+    Returns a dataframe with a summary of the cluster parameters that can be displayed
     '''
     pd.set_option('display.max_colwidth', -1)
     keysToShow = ["ClusterIdentifier", "NodeType", "ClusterStatus", "MasterUsername", "DBName", "Endpoint", "NumberOfNodes", 'VpcId']
@@ -154,7 +152,7 @@ def prettyRedshiftProps(props):
 
 def show_cluster_proportions(DWH_CLUSTER_IDENTIFIER, redshift):
     '''
-    
+    Prints the cluster properties as a df and returns the properties
     '''
     print("Showing cluster proportions:")
     myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
@@ -165,35 +163,22 @@ def show_cluster_proportions(DWH_CLUSTER_IDENTIFIER, redshift):
 
 def waitUntil(redshift, DWH_CLUSTER_IDENTIFIER):
     '''
-    
+    Function checks wether 
     '''
-    print("Checks if condition is met otherwise wait until it is met")
+    print("Checks if condition (Cluster is available) is met otherwise wait until it is met")
     while (1):
-        print("Made it in while loop")
+        print("While loop to wait for the cluster to become available")
         myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
         if list(myClusterProps.items())[2][1]=='available': #checks the condition
             print("Condition is met - cluster is available, next stepp will be executed")
             #output
             break
-        print("if was not triggered, following: time.sleep(40s)")
+        print("Not available yet, following 40s of waiting until checking again")
         time.sleep(40) #waits 40s for performance
-        
-#def waitUntil(condition, output):
-#    '''
-#    
-#    '''
-#    wU = True
-#    while wU == True:
-#        print("Checks if condition is met otherwise wait until it is met")
-#        if condition: #checks the condition
-#            print("Condition is met")
-#            output
-#            wU = False
-#        time.sleep(60) #waits 60s for performance
         
 def get_endpoint_and_arn(redshift, DWH_CLUSTER_IDENTIFIER):
     '''
-    
+    Prints out the entpoint/host and role ARN so it can be noted down in the dwh.cfg file.
     '''
     print("Cluster is now available, here are the parameters:")
     myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
@@ -205,6 +190,9 @@ def get_endpoint_and_arn(redshift, DWH_CLUSTER_IDENTIFIER):
     print("WRITE THE DWH_ENDPOINT (=host) AND DWH_ROLE_ARN (=ARN) in the dwh.cfg file to process further with creating tables and etl.py")
     
 def open_incoming_TCP_port(DWH_PORT, redshift, ec2, DWH_CLUSTER_IDENTIFIER):
+    '''
+    Opens an TCP port- to access the cluster endpoint
+    '''
     myClusterProps = redshift.describe_clusters(ClusterIdentifier=DWH_CLUSTER_IDENTIFIER)['Clusters'][0]
     print("Opening and incoming TCP port to access the cluster endpoint")
     try:

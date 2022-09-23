@@ -110,7 +110,6 @@ time_table_create = ("""CREATE TABLE time (
 # Documentation here: https://docs.aws.amazon.com/redshift/latest/dg/r_COPY_command_examples.html#r_COPY_command_examples-copy-from-json
 
 
-###### Clarify if one needs the 'us-west-2' ??
 staging_events_copy = ("""COPY staging_events FROM {data_bucket}
     IAM_ROLE {role_arn}
     region 'us-west-2'
